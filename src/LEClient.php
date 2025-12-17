@@ -47,9 +47,9 @@ class LEClient
 
 	private $connector;
 	private $account;
-	
+
 	private $sourceIp = false;
-	
+
 	private $log;
 
 	const LOG_OFF = 0;		// Logs no messages or faults, except Runtime Exceptions.
@@ -157,7 +157,7 @@ class LEClient
 
 		$this->connector = new LEConnector($this->log, $this->baseURL, $this->accountKeys, $this->sourceIp);
 		if ($this->connector->externalAccountRequired) {
-			if($this->log instanceof \Psr\Log\LoggerInterface) 
+			if($this->log instanceof \Psr\Log\LoggerInterface)
 			{
 				$this->log->info('LEClient : ACME provider requires External Account Binding');
 			}
@@ -165,10 +165,10 @@ class LEClient
 
 			if (!isset($eabParams['kid'])) throw LEClientException::InvalidArgumentException('eabParams[kid] must be set for External Account Binding.');
 			if (!isset($eabParams['hmac'])) throw LEClientException::InvalidArgumentException('eabParams[hmac] must be set for External Account Binding.');
-		} 
+		}
 		$this->account = new LEAccount($this->connector, $this->log, $email, $this->accountKeys, $eabParams);
-		
-		if($this->log instanceof \Psr\Log\LoggerInterface) 
+
+		if($this->log instanceof \Psr\Log\LoggerInterface)
 		{
 			$this->log->info('LEClient finished constructing');
 		}
@@ -193,12 +193,13 @@ class LEClient
      * @param array 	$domains 	The array of strings containing the domain names on the certificate.
      * @param string 	$keyType 	Type of the key we want to use for certificate. Can be provided in ALGO-SIZE format (ex. rsa-4096 or ec-256) or simple "rsa" and "ec" (using default sizes)
      * @param string 	$notBefore	A date string formatted like 0000-00-00T00:00:00Z (yyyy-mm-dd hh:mm:ss) at which the certificate becomes valid. Defaults to the moment the order is finalized. (optional)
-     * @param string 	$notAfter  	A date string formatted like 0000-00-00T00:00:00Z (yyyy-mm-dd hh:mm:ss) until which the certificate is valid. Defaults to 90 days past the moment the order is finalized. (optional)
+     * @param string 	$notAfter	A date string formatted like 0000-00-00T00:00:00Z (yyyy-mm-dd hh:mm:ss) until which the certificate is valid. Defaults to 90 days past the moment the order is finalized. (optional)
+	 * @param boolean 	$skipOrderValidation  A boolean indicating whether to skip order status validation after creation/retrieval. Defaults to false. (optional)
      *
      * @return LEOrder	The LetsEncrypt Order instance which is either retrieved or created.
      */
-	public function getOrCreateOrder($basename, $domains, $keyType = 'rsa-4096', $notBefore = '', $notAfter = '')
+	public function getOrCreateOrder($basename, $domains, $keyType = 'rsa-4096', $notBefore = '', $notAfter = '', boolean $skipOrderValidation)
 	{
-		return new LEOrder($this->connector, $this->log, $this->certificateKeys, $basename, $domains, $keyType, $notBefore, $notAfter);
+		return new LEOrder($this->connector, $this->log, $this->certificateKeys, $basename, $domains, $keyType, $notBefore, $notAfter, $skipOrderValidation);
 	}
 }
