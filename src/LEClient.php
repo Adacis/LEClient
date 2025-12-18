@@ -198,7 +198,7 @@ class LEClient
      *
      * @return LEOrder	The LetsEncrypt Order instance which is either retrieved or created.
      */
-	public function getOrCreateOrder($basename, $domains, $keyType = 'rsa-4096', $notBefore = '', $notAfter = '', boolean $skipOrderValidation)
+	public function getOrCreateOrder($basename, $domains, $keyType = 'rsa-4096', $notBefore = '', $notAfter = '', bool $skipOrderValidation = false)
 	{
 		return new LEOrder($this->connector, $this->log, $this->certificateKeys, $basename, $domains, $keyType, $notBefore, $notAfter, $skipOrderValidation);
 	}

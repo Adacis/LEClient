@@ -102,7 +102,7 @@ class LEOrder
      * @param string 		$notAfter 			A date string formatted like 0000-00-00T00:00:00Z (yyyy-mm-dd hh:mm:ss) until which the certificate is valid.
      * @param boolean		$skipOrderValidation	Whether to skip validation of existing order status. Useful when restoring from backup where order status might be invalid.
      */
-    public function __construct($connector, $log, $certificateKeys, $basename, $domains, $keyType = 'rsa-4096', $notBefore, $notAfter, boolean $skipOrderValidation)
+    public function __construct($connector, $log, $certificateKeys, $basename, $domains, $keyType = 'rsa-4096', $notBefore = '', $notAfter = '', bool $skipOrderValidation = false)
     {
         $this->connector = $connector;
         $this->basename = $basename;
