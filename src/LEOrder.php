@@ -47,6 +47,7 @@ class LEOrder
     private $orderURL;
     private $keyType;
     private $keySize;
+    private $skipOrderValidation;
 
     public $status;
     public $expires;
@@ -58,9 +59,35 @@ class LEOrder
 
     private $log;
 
-
     const CHALLENGE_TYPE_HTTP = 'http-01';
     const CHALLENGE_TYPE_DNS = 'dns-01';
+
+    /* Referencing RFC5280 for valid revocation codes
+    ** https://datatracker.ietf.org/doc/html/rfc5280#section-5.3.1
+    */
+    const REVOCATION_REASON_UNSPECIFIED            = 0;
+    const REVOCATION_REASON_KEY_COMPROMISE         = 1;
+    const REVOCATION_REASON_CA_COMPROMISE          = 2;
+    const REVOCATION_REASON_AFFILIATION_CHANGED    = 3;
+    const REVOCATION_REASON_SUPERSEDED             = 4;
+    const REVOCATION_REASON_CESSATION_OF_OPERATION = 5;
+    const REVOCATION_REASON_CERTIFICATE_HOLD       = 6;
+    const REVOCATION_REASON_REMOVE_FROM_CRL        = 8;
+    const REVOCATION_REASON_PRIVILEGE_WITHDRAWN    = 9;
+    const REVOCATION_REASON_AA_COMPROMISE          = 10;
+
+    const VALID_REVOCATION_REASONS = [
+        self::REVOCATION_REASON_UNSPECIFIED,
+        self::REVOCATION_REASON_KEY_COMPROMISE,
+        self::REVOCATION_REASON_CA_COMPROMISE,
+        self::REVOCATION_REASON_AFFILIATION_CHANGED,
+        self::REVOCATION_REASON_SUPERSEDED,
+        self::REVOCATION_REASON_CESSATION_OF_OPERATION,
+        self::REVOCATION_REASON_CERTIFICATE_HOLD,
+        self::REVOCATION_REASON_REMOVE_FROM_CRL,
+        self::REVOCATION_REASON_PRIVILEGE_WITHDRAWN,
+        self::REVOCATION_REASON_AA_COMPROMISE
+    ];
 
     /**
      * Initiates the LetsEncrypt Order class. If the base name is found in the $keysDir directory, the order data is requested. If no order was found locally, if the request is invalid or when there is a change in domain names, a new order is created.
@@ -73,12 +100,14 @@ class LEOrder
      * @param string 		$keyType 			Type of the key we want to use for certificate. Can be provided in ALGO-SIZE format (ex. rsa-4096 or ec-256) or simple "rsa" and "ec" (using default sizes)
      * @param string 		$notBefore 			A date string formatted like 0000-00-00T00:00:00Z (yyyy-mm-dd hh:mm:ss) at which the certificate becomes valid.
      * @param string 		$notAfter 			A date string formatted like 0000-00-00T00:00:00Z (yyyy-mm-dd hh:mm:ss) until which the certificate is valid.
+     * @param boolean		$skipOrderValidation	Whether to skip validation of existing order status. Useful when restoring from backup where order status might be invalid.
      */
-    public function __construct($connector, $log, $certificateKeys, $basename, $domains, $keyType = 'rsa-4096', $notBefore, $notAfter)
+    public function __construct($connector, $log, $certificateKeys, $basename, $domains, $keyType = 'rsa-4096', $notBefore = '', $notAfter = '', bool $skipOrderValidation = false)
     {
         $this->connector = $connector;
         $this->basename = $basename;
         $this->log = $log;
+        $this->skipOrderValidation = $skipOrderValidation;
 
         if ($keyType == 'rsa')
         {
@@ -118,7 +147,7 @@ class LEOrder
                 {
                     $sign = $this->connector->signRequestKid('', $this->connector->accountURL, $this->orderURL);
                     $post = $this->connector->post($this->orderURL, $sign);
-                    if($post['body']['status'] == "invalid")
+                    if(($post['body']['status'] == "invalid") && (!$skipOrderValidation))
                     {
                         throw LEOrderException::InvalidOrderStatusException();
                     }
@@ -321,7 +350,7 @@ class LEOrder
      *						a Runtime Exception when requesting an unknown $type. Keep in mind a wildcard domain authorization only accepts LEOrder::CHALLENGE_TYPE_DNS.
      * @param string $authStatus The status of the authorization.
      * @param string $challengeStatus The status of the challenge.
-     * 
+     *
      * @return object	Returns an array with verification data if successful, false if not pending LetsEncrypt Authorization instances were found. The return array always
      *					contains 'type' and 'identifier'. For LEOrder::CHALLENGE_TYPE_HTTP, the array contains 'filename' and 'content' for necessary the authorization file.
      *					For LEOrder::CHALLENGE_TYPE_DNS, the array contains 'DNSDigest', which is the content for the necessary DNS TXT entry.
@@ -755,9 +784,12 @@ class LEOrder
      *
      * @return boolean	Returns true if the certificate was successfully revoked, false if not.
      */
-    public function revokeCertificate($reason = 0)
+    public function revokeCertificate(int $reason = 0)
     {
-        if($this->status == 'valid' || $this->status == 'ready')
+        if (!in_array($reason, self::VALID_REVOCATION_REASONS, true)) {
+            throw LEOrderException::InvalidArgumentException('Invalid revocation reason: ' . $reason);
+        }
+        if($this->status == 'valid' || $this->status == 'ready' || $this->$skipOrderValidation)
         {
             if (isset($this->certificateKeys['certificate'])) $certFile = $this->certificateKeys['certificate'];
             elseif (isset($this->certificateKeys['fullchain_certificate']))  $certFile = $this->certificateKeys['fullchain_certificate'];
