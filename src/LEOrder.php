@@ -789,7 +789,7 @@ class LEOrder
         if (!in_array($reason, self::VALID_REVOCATION_REASONS, true)) {
             throw LEOrderException::InvalidArgumentException('Invalid revocation reason: ' . $reason);
         }
-        if($this->status == 'valid' || $this->status == 'ready' || $this->$skipOrderValidation)
+        if($this->status == 'valid' || $this->status == 'ready' || $this->skipOrderValidation)
         {
             if (isset($this->certificateKeys['certificate'])) $certFile = $this->certificateKeys['certificate'];
             elseif (isset($this->certificateKeys['fullchain_certificate']))  $certFile = $this->certificateKeys['fullchain_certificate'];
