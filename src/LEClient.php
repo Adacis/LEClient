@@ -202,4 +202,61 @@ class LEClient
 	{
 		return new LEOrder($this->connector, $this->log, $this->certificateKeys, $basename, $domains, $keyType, $notBefore, $notAfter, $skipOrderValidation);
 	}
+
+    /**
+     * Revoke a certificate.
+     *
+     * @param string 	$basename	The CN of the certificate to revoke.
+     * @param int 	    $reason		The reason for revocation. Must be one of the valid revocation reasons.
+     * @throws LEClientException    If the certificate is not found or the revocation reason is invalid.
+     * 
+     * @return boolean	Returns true if the certificate was successfully revoked, false if not.
+     */
+    public function revokeCertificate($basename, int $reason = 0)
+    {
+        if (!in_array($reason, LEOrder::VALID_REVOCATION_REASONS, true)) {
+            throw LEClientException::InvalidArgumentException('Invalid revocation reason: ' . $reason);
+        }
+
+        $certFile = '';
+        if (isset($this->certificateKeys['certificate'])) {
+            $certFile = $this->certificateKeys['certificate'];
+        } elseif (isset($this->certificateKeys['fullchain_certificate'])) {
+            $certFile = $this->certificateKeys['fullchain_certificate'];
+        } else {
+            throw new \Exception('certificateKeys[certificate] or certificateKeys[fullchain_certificate] required');
+        }
+
+        if (file_exists($certFile) && file_exists($this->certificateKeys['private_key'])) {
+            $certificate = file_get_contents($this->certificateKeys['certificate']);
+            preg_match('~-----BEGIN\sCERTIFICATE-----(.*)-----END\sCERTIFICATE-----~s', $certificate, $matches);
+            $certificate = trim(LEFunctions::Base64UrlSafeEncode(base64_decode(trim($matches[1]))));
+
+            $sign = $this->connector->signRequestJWK(array('certificate' => $certificate, 'reason' => $reason), $this->connector->revokeCert, $this->certificateKeys['private_key']);
+            $post = $this->connector->post($this->connector->revokeCert, $sign);
+            if ($post['status'] === 200) {
+                if ($this->log instanceof \Psr\Log\LoggerInterface) {
+                    $this->log->info('Certificate for order \'' . $basename . '\' revoked.');
+                } elseif ($this->log >= LEClient::LOG_STATUS) {
+                    LEFunctions::log('Certificate for order \'' . $basename . '\' revoked.', 'function revokeCertificate');
+                }
+
+                return true;
+            } else {
+                if ($this->log instanceof \Psr\Log\LoggerInterface) {
+                    $this->log->info('Certificate for order \'' . $basename . '\' cannot be revoked.');
+                } elseif ($this->log >= LEClient::LOG_STATUS) {
+                    LEFunctions::log('Certificate for order \'' . $basename . '\' cannot be revoked.', 'function revokeCertificate');
+                }
+            }
+        } else {
+            if ($this->log instanceof \Psr\Log\LoggerInterface) {
+                $this->log->info('Certificate for order \'' . $basename . '\' not found. Cannot revoke certificate.');
+            } elseif ($this->log >= LEClient::LOG_STATUS) {
+                LEFunctions::log('Certificate for order \'' . $basename . '\' not found. Cannot revoke certificate.', 'function revokeCertificate');
+            }
+        }
+
+        return false;
+    }
 }
