@@ -238,7 +238,7 @@ class LEClient
                 if ($this->log instanceof \Psr\Log\LoggerInterface) {
                     $this->log->info('Certificate for order \'' . $basename . '\' revoked.');
                 } elseif ($this->log >= LEClient::LOG_STATUS) {
-                    LEFunctions::log('Certificate for order \'' . $basename . '\' revoked.', 'function revokeCertificate');
+                    LEFunctions::log('Certificate for order \'' . $basename . '\' revoked.', 'function revokeCertificateWithoutOrder');
                 }
 
                 return true;
@@ -246,14 +246,14 @@ class LEClient
                 if ($this->log instanceof \Psr\Log\LoggerInterface) {
                     $this->log->info('Certificate for order \'' . $basename . '\' cannot be revoked.');
                 } elseif ($this->log >= LEClient::LOG_STATUS) {
-                    LEFunctions::log('Certificate for order \'' . $basename . '\' cannot be revoked.', 'function revokeCertificate');
+                    LEFunctions::log('Certificate for order \'' . $basename . '\' cannot be revoked.', 'function revokeCertificateWithoutOrder');
                 }
             }
         } else {
             if ($this->log instanceof \Psr\Log\LoggerInterface) {
                 $this->log->info('Certificate for order \'' . $basename . '\' not found. Cannot revoke certificate.');
             } elseif ($this->log >= LEClient::LOG_STATUS) {
-                LEFunctions::log('Certificate for order \'' . $basename . '\' not found. Cannot revoke certificate.', 'function revokeCertificate');
+                LEFunctions::log('Certificate for order \'' . $basename . '\' not found. Cannot revoke certificate.', 'function revokeCertificateWithoutOrder');
             }
         }
 
