@@ -204,7 +204,7 @@ class LEClient
 	}
 
     /**
-     * Revoke a certificate.
+     * Revoke a certificate bypassing LEOrder.
      *
      * @param string 	$basename	The CN of the certificate to revoke.
      * @param int 	    $reason		The reason for revocation. Must be one of the valid revocation reasons.
@@ -212,7 +212,7 @@ class LEClient
      * 
      * @return boolean	Returns true if the certificate was successfully revoked, false if not.
      */
-    public function revokeCertificate($basename, int $reason = 0)
+    public function revokeCertificateWithoutOrder($basename, int $reason = 0)
     {
         if (!in_array($reason, LEOrder::VALID_REVOCATION_REASONS, true)) {
             throw LEClientException::InvalidArgumentException('Invalid revocation reason: ' . $reason);
