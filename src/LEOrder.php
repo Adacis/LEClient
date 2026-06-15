@@ -874,7 +874,7 @@ class LEOrder
     {
         if($response['status'] === 200)
         {
-            if(preg_match_all('~-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----~s', $response['body'], $matches))
+            if(preg_match_all('~(-----BEGIN\sCERTIFICATE-----[\s\S]+?-----END\sCERTIFICATE-----)~i', $response['body'], $matches))
             {
                 $certificateParts = [
                     'leaf' => $matches[0][0],
