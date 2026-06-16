@@ -876,10 +876,16 @@ class LEOrder
         {
             if(preg_match_all('~(-----BEGIN\sCERTIFICATE-----[\s\S]+?-----END\sCERTIFICATE-----)~i', $response['body'], $matches))
             {
-                return [
+                $certificateParts = [
                     'leaf' => $matches[0][0],
                     'intermediate' => $matches[0][1],
                 ];
+
+                for($i = 2; $i < count($matches[0]); $i++) {
+                    $certificateParts['others' . $i] = $matches[0][$i];
+                }
+
+                return $certificateParts;
             }
             else
             {
