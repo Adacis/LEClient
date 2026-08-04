@@ -346,7 +346,7 @@ class LEFunctions
     
             if(count($content) === 2) {
                 [$name, $value] = $content;
-                
+
                 $accumulator[strtolower($name)][] = $value; 
             }
 
