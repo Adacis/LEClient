@@ -51,6 +51,7 @@ class LEClient
 	private $sourceIp = false;
 
 	private $log;
+    private $baseUrl;
 
 	const LOG_OFF = 0;		// Logs no messages or faults, except Runtime Exceptions.
 	const LOG_STATUS = 1;	// Logs only messages and faults.
